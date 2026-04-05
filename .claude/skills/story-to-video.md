@@ -253,12 +253,17 @@ Grok adds generic background music if you don't specify. Control it:
 
 ### Kie.ai API Wrapper:
 
+Each bridge uses **TWO keyframe images** — the start frame and the end frame. Grok interpolates the motion between them guided by your prompt. The prompt describes the **directions for what happens between image 1 and image 2**.
+
 ```json
 {
   "model": "grok-imagine/image-to-video",
   "input": {
-    "image_urls": ["<Keyframe N image URL>"],
-    "prompt": "<natural language bridge prompt>",
+    "image_urls": [
+      "<KF-N START image URL>",
+      "<KF-N+1 END image URL>"
+    ],
+    "prompt": "<motion directions: what happens between these two images>",
     "mode": "normal",
     "duration": 6,
     "resolution": "720p",
@@ -266,6 +271,8 @@ Grok adds generic background music if you don't specify. Control it:
   }
 }
 ```
+
+**IMPORTANT**: The `image_urls` array takes up to 7 images. For standard bridges, always provide exactly 2: the start keyframe and the end keyframe. The prompt should only describe the **motion and transitions** between them — do NOT re-describe the static elements already visible in the images.
 
 **Mode selection guide:**
 - `normal` — Default for most narrative scenes. Balanced, predictable.
@@ -282,7 +289,11 @@ Grok adds generic background music if you don't specify. Control it:
 
 ## PHASE 5: Assemble the Production Sheet
 
-Output the complete package as a numbered production sheet:
+Output the complete package as a numbered production sheet.
+
+**CRITICAL — Output Order:**
+
+The first two keyframes are generated before any video bridge (you need both images before you can animate between them). After that, each new keyframe is followed immediately by the bridge that connects it to the previous one.
 
 ```
 PRODUCTION SHEET: [Story Title]
@@ -301,19 +312,40 @@ CONTINUITY BIBLE
 KF-01 (0:00) — [Scene description]
 [Nano Banana Pro JSON prompt]
 
-BRIDGE 01→02 (0:00–0:06) — [Action description]
-[Grok Imagine natural language prompt]
-[Kie.ai API wrapper]
-
 KF-02 (0:06) — [Scene description]
 [Nano Banana Pro JSON prompt]
 
-BRIDGE 02→03 (0:06–0:12) — [Action description]
-[Grok Imagine natural language prompt]
-[Kie.ai API wrapper]
+BRIDGE 01→02 (0:00–0:06) — [Action description]
+  Start image: KF-01
+  End image: KF-02
+  [Grok Imagine natural language prompt]
+  [Kie.ai API wrapper with BOTH image URLs]
 
-...continue for all keyframes and bridges...
+KF-03 (0:12) — [Scene description]
+[Nano Banana Pro JSON prompt]
+
+BRIDGE 02→03 (0:06–0:12) — [Action description]
+  Start image: KF-02
+  End image: KF-03
+  [Grok Imagine natural language prompt]
+  [Kie.ai API wrapper with BOTH image URLs]
+
+KF-04 (0:18) — [Scene description]
+[Nano Banana Pro JSON prompt]
+
+BRIDGE 03→04 (0:12–0:18) — [Action description]
+  Start image: KF-03
+  End image: KF-04
+  [Grok Imagine natural language prompt]
+  [Kie.ai API wrapper with BOTH image URLs]
+
+...continue pattern: new keyframe → bridge connecting it to previous keyframe...
 ```
+
+**Why this order:**
+1. You need KF-01 AND KF-02 images generated before you can create Bridge 01→02
+2. Once Bridge 01→02 is done, generate KF-03 image, then create Bridge 02→03
+3. This ensures you always have both start and end images ready before animating
 
 ---
 
